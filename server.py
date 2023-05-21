@@ -12,7 +12,7 @@ waiting = {}
 
 async def handle_client(client, player_id):
     global id_count
-    if waiting < 6:
+    if len(waiting) < 6:
         waiting[player_id] = client
     game_id = None
     player = 0
@@ -95,22 +95,23 @@ async def main():
     loop = asyncio.get_event_loop()
 
     while True:
-        client, _ = await loop.sock_accept(server)
-        print("Connected to:", _)
-        id_count += 1
-        p = 0
-        try:
-            loop.create_task(handle_client(client, id_count))
-        except Exception as e:
-            print(e)
-        # game_id = (id_count - 1) // 2
-        # if id_count % 2 == 1:
-        #     games[game_id] = Game(game_id)
-        #     print("Creating a new game...")
-        # else:
-        #     games[game_id].ready = True
-        #     p = 1
-        # loop.create_task(handle_client(client, p, game_id))
+        if len(waiting) < 6:
+            client, _ = await loop.sock_accept(server)
+            print("Connected to:", _)
+            id_count += 1
+            p = 0
+            try:
+                loop.create_task(handle_client(client, id_count))
+            except Exception as e:
+                print(e)
+            # game_id = (id_count - 1) // 2
+            # if id_count % 2 == 1:
+            #     games[game_id] = Game(game_id)
+            #     print("Creating a new game...")
+            # else:
+            #     games[game_id].ready = True
+            #     p = 1
+            # loop.create_task(handle_client(client, p, game_id))
 
 
 if __name__ == '__main__':
