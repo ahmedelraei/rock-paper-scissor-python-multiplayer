@@ -3,7 +3,6 @@ import socket
 import pickle
 from game import Game
 from communication import Event
-import traceback
 
 games: dict[int, Game] = {}
 id_count = 0
@@ -103,14 +102,6 @@ async def main():
             loop.create_task(handle_client(client, id_count))
         except Exception as e:
             print(e)
-        # game_id = (id_count - 1) // 2
-        # if id_count % 2 == 1:
-        #     games[game_id] = Game(game_id)
-        #     print("Creating a new game...")
-        # else:
-        #     games[game_id].ready = True
-        #     p = 1
-        # loop.create_task(handle_client(client, p, game_id))
 
 
 if __name__ == '__main__':
