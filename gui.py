@@ -84,13 +84,11 @@ def redraw_window(win, game: Game, p, invitation=None):
 
         for btn in btns:
             btn.draw(win)
-        quitBtn.draw(win)
 
     pygame.display.update()
 
 
 accept_btn = Button("Accept Invitation", 250, 350, (255, 0, 0))
-quitBtn = Button("Quit Match", 250, 600, (123, 232, 212))
 btns = [Button("Rock", 50, 500, (0, 0, 0)), Button("Scissors", 250, 500, (255, 0, 0)),
         Button("Paper", 450, 500, (0, 255, 0))]
 lobby_btns = []
@@ -169,11 +167,13 @@ def main():
                 for btn in lobby_btns:
                     if btn.click(pos):
                         event: Event = comm.send(btn.value)
+                        print(event)
                         player = int(event.message)
                         message = Event(type=Event.EventType.PLAY)
                 if accept_btn.click(pos):
                     message = Event(type=Event.EventType.PLAY)
-                    response: Event = comm.send(Event(type=Event.EventType.ACCEPT, message=str(invitation)))
+                    comm.send(Event(type=Event.EventType.ACCEPT, message=str(invitation)))
+                    response: Event = comm.recieve(4096)
                     print("RESPONSE: ", response)
                     player = response.message
                     invitation = None
@@ -188,9 +188,6 @@ def main():
                             else:
                                 if not game.p2_moved:
                                     comm.send(Event(type=Event.EventType.PLAY, message=btn.text))
-                # if quitBtn.click(pos):
-                #     n.send("QUIT_MATCH")
-        # print(game)
         redraw_window(win, game if isinstance(game, Game) else None, player, invitation=invitation)
         pygame.time.delay(500)
         pygame.display.update()
