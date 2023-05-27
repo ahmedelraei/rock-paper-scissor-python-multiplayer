@@ -70,6 +70,7 @@ class Server:
         :return: event object or None
         """
         if player_chosen in self.waiting:
+            self.games[player_id] = Game(player_id)
             event = self.__process_event(Event.EventType.INVITE, str(player_id))
             return event
         return None
@@ -99,7 +100,7 @@ class Server:
         try:
             del self.games[game_id]
         except KeyError:
-            raise Exception("Game not found")
+            raise KeyError("Game not found")
         return self.__process_event(Event.EventType.DECLINE, str(game_id))
 
     def play(self, game_id, player, move) -> Game | None:
@@ -194,8 +195,8 @@ class Server:
                     print(player_id, player_chosen)
                     invite = self.invite(player_id, player_chosen)
                     if invite:
-                        game_id = player_id
-                        self.games[game_id] = Game(game_id)
+                        # game_id = player_id
+                        # self.games[game_id] = Game(game_id)
                         # await loop.sock_sendall(client, pickle.dumps(games[game_id]))
                         await loop.sock_sendall(client,
                                                 pickle.dumps(self.__process_event(Event.EventType.PLAYER, player)))
@@ -215,6 +216,12 @@ class Server:
             print(e)
         self.id_count -= 1
         client.close()
+
+    def close(self):
+        """
+        Close serverKeyError
+        """
+        self.server.close()
 
 
 if __name__ == '__main__':
