@@ -11,14 +11,14 @@ pygame.display.set_caption("Client")
 
 
 class Button:
-    def __init__(self, text, x, y, color, value=None):
+    def __init__(self, text, x, y, color, width=150, height=100, value=None):
         self.text = text
         self.value = str(value) if value is not None else text
         self.x = x
         self.y = y
         self.color = color
-        self.width = 150
-        self.height = 100
+        self.width = width
+        self.height = height
 
     def draw(self, win):
         pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height))
@@ -40,6 +40,7 @@ def redraw_window(win, game: Game, p, invitation=None):
     win.fill((128, 128, 128))
     if invitation:
         accept_btn.draw(win)
+        decline_btn.draw(win)
     elif not game and lobby_btns:
         for btn in lobby_btns:
             btn.draw(win)
@@ -88,7 +89,8 @@ def redraw_window(win, game: Game, p, invitation=None):
     pygame.display.update()
 
 
-accept_btn = Button("Accept Invitation", 250, 350, (255, 0, 0))
+accept_btn = Button("Accept Invitation", 50, 100, (255, 0, 0), 500)
+decline_btn = Button("Decline Invitation", 50, 350, (255, 0, 0), 500)
 btns = [Button("Rock", 50, 500, (0, 0, 0)), Button("Scissors", 250, 500, (255, 0, 0)),
         Button("Paper", 450, 500, (0, 255, 0))]
 lobby_btns = []
@@ -98,18 +100,26 @@ def main():
     global lobby_btns
     run = True
     clock = pygame.time.Clock()
-    comm = Communication()
-    player = int(comm.get_player())
-    print(f"You are player {player}")
+    try:
+        comm = Communication()
+        player = comm.get_player()
+        player = player and int(player) or None
+        print(player)
+        print(f"You are player {player}")
+    except Exception as e:
+        print("ERROR ", e)
     game = None
     invitation = None
     message = "get"
     while run:
         try:
             data = comm.send(message)
+            print(data)
         except Exception as e:
-            print("ERROR ", e)
+            run = False
+            break
         if isinstance(data, Game):
+            print(data)
             game = data
             invitation = None
             message = Event(type=Event.EventType.PLAY)
@@ -119,10 +129,13 @@ def main():
                 player_id = event.message
                 accept_btn.text = f"Accept Invitation From Player {player_id}"
                 invitation = player_id
+            elif event.type == Event.EventType.DECLINE:
+                invitation = None
+                message = "get"
             elif event.type == Event.EventType.PLAYER:
                 player = int(event.message)
                 message = Event(type=Event.EventType.PLAY)
-                print(f"You are player {player} in this game")
+                # print(f"You are player {player} in this game")
 
         elif isinstance(data, list):
             lobby = data
@@ -167,21 +180,26 @@ def main():
                 for btn in lobby_btns:
                     if btn.click(pos):
                         event: Event = comm.send(btn.value)
-                        print(event)
-                        player = int(event.message)
-                        message = Event(type=Event.EventType.PLAY)
+                        if isinstance(event, Event):
+                            player = int(event.message)
+                            message = Event(type=Event.EventType.PLAY)
                 if accept_btn.click(pos):
                     message = Event(type=Event.EventType.PLAY)
                     comm.send(Event(type=Event.EventType.ACCEPT, message=str(invitation)))
-                    response: Event = comm.recieve(4096)
-                    print("RESPONSE: ", response)
-                    player = response.message
+                    game = comm.recieve(4096)
+                    print(game)
                     invitation = None
+                    player = 1
+
+                if decline_btn.click(pos):
+                    message = 'get'
+                    comm.send(Event(type=Event.EventType.DECLINE, message=str(invitation)))
+                    invitation = None
+
                 if game:
                     for btn in btns:
                         if btn.click(pos) and game.connected():
                             print("BTN: ", btn.text)
-                            print(player, game.p1_moved, game.p2_moved)
                             if player == 0:
                                 if not game.p1_moved:
                                     comm.send(Event(type=Event.EventType.PLAY, message=btn.text))

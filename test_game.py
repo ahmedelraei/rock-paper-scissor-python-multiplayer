@@ -24,7 +24,8 @@ class TestGame(unittest.TestCase):
         self.game.play(0, "rock")
         self.game.play(1, "paper")
         self.game.reset_moves()
-        self.assertEqual([None, None], self.game.moves)
+        self.assertEqual(False, self.game.p1_moved)
+        self.assertEqual(False, self.game.p2_moved)
 
     def test_rock_paper(self):
         self.game.play(0, "rock")

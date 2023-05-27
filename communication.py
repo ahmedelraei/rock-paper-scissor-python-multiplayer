@@ -15,6 +15,9 @@ class Event:
         self.type = type
         self.message = message
 
+    def __str__(self):
+        return f"Event({self.type}, {self.message})"
+
 
 class Communication:
     def __init__(self):
@@ -31,6 +34,7 @@ class Communication:
         try:
             self.client.connect(self.addr)
             data = self.client.recv(2048).decode()
+            print(data)
             if data:
                 return data
         except Exception as e:
