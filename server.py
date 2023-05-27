@@ -13,10 +13,10 @@ class Server:
         self.server.listen(3)
         self.server.setblocking(False)
         self.id_count = 0
-        self.games = {}
-        self.waiting = {}
-        self.connected = {}
-        self.playing = {}
+        self.games = {}  # games dictionary {game_id: Game} to keep track of games
+        self.waiting = {}  # waiting dictionary {player_id: client} to keep track of players waiting for game
+        self.connected = {}  # connected dictionary {player_id: client} to keep track of connected players all over the server
+        self.playing = {}  # playing dictionary {host_player_id: other_player_id} to keep track of players playing in a game
 
     async def start(self):
         """
@@ -71,6 +71,7 @@ class Server:
         """
         if player_chosen in self.waiting:
             self.games[player_id] = Game(player_id)
+            print(self.games)
             event = self.__process_event(Event.EventType.INVITE, str(player_id))
             return event
         return None
@@ -104,7 +105,6 @@ class Server:
         return self.__process_event(Event.EventType.DECLINE, str(game_id))
 
     def play(self, game_id, player, move) -> Game | None:
-        # TODO: implement moves validation
         """
         Play move in game
         :param game_id: id of game to make play
@@ -133,7 +133,7 @@ class Server:
     async def handle_client(self, client, player_id: int):
         """
         Handle client connection
-        :param client: client socket
+        :param client: clientTestHandleClient socket
         :param player_id: player id
         """
         self.add_to_waiting(client, player_id)
@@ -152,18 +152,14 @@ class Server:
                     await loop.sock_sendall(client, response)
                 elif isinstance(data, Event):
                     event = data
+                    print(event, player_id)
                     if event.type == Event.EventType.ACCEPT:
                         game_id = int(event.message)
                         game = self.accept_invitation(game_id, player_id)
-                        # self.games[game_id].ready = True
                         player = 1
                         await loop.sock_sendall(client,
                                                 pickle.dumps(game))
                         await loop.sock_sendall(self.connected[game_id], pickle.dumps(game))
-                        # self.connected[game_id] = self.waiting[game_id]
-                        # self.connected[player_id] = client
-                        # del self.waiting[game_id]
-                        # del self.waiting[player_id]
                     elif event.type == Event.EventType.DECLINE:
                         game_id = int(event.message)
                         response = self.decline_invitation(game_id)
@@ -184,33 +180,33 @@ class Server:
                                         self.waiting[game_id] = self.connected[game_id]
                                         del self.connected[game_id]
                                         self.waiting[player_id] = client
-                                        # del self.connected[player_id]
                             await loop.sock_sendall(client, pickle.dumps(self.games[game_id]))
                     await loop.sock_sendall(client,
                                             pickle.dumps(self.__process_event(Event.EventType.PLAYER, player)))
-
 
                 else:
                     player_chosen = int(data)
                     print(player_id, player_chosen)
                     invite = self.invite(player_id, player_chosen)
                     if invite:
-                        # game_id = player_id
-                        # self.games[game_id] = Game(game_id)
-                        # await loop.sock_sendall(client, pickle.dumps(games[game_id]))
+                        game_id = player_id
+                        player = 0
                         await loop.sock_sendall(client,
-                                                pickle.dumps(self.__process_event(Event.EventType.PLAYER, player)))
+                                                pickle.dumps(self.__process_event(Event.EventType.PLAYER, str(player))))
                         await loop.sock_sendall(self.waiting[player_chosen], pickle.dumps(invite))
 
                     else:
                         response = pickle.dumps("Player not found")
                         await loop.sock_sendall(client, response)
             except Exception as e:
-                print(str(e))
+                print(e)
                 break
         print("Lost connection")
         try:
             del self.waiting[player_id]
+            del self.connected[player_id]
+            del self.playing[game_id]
+            del self.games[game_id]
             print("Removing player from lobby...", player_id)
         except Exception as e:
             print(e)

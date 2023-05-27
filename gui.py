@@ -180,10 +180,11 @@ def main():
                 for btn in lobby_btns:
                     if btn.click(pos):
                         event: Event = comm.send(btn.value)
+                        player = 0
                         if isinstance(event, Event):
                             player = int(event.message)
-                            message = Event(type=Event.EventType.PLAY)
-                if accept_btn.click(pos):
+                        message = Event(type=Event.EventType.PLAY)
+                if accept_btn.click(pos) and invitation:
                     message = Event(type=Event.EventType.PLAY)
                     comm.send(Event(type=Event.EventType.ACCEPT, message=str(invitation)))
                     game = comm.recieve(4096)
