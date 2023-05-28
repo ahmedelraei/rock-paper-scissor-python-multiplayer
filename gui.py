@@ -132,6 +132,7 @@ def main():
             elif event.type == Event.EventType.DECLINE:
                 invitation = None
                 message = "get"
+                player = None
             elif event.type == Event.EventType.PLAYER:
                 player = int(event.message)
                 message = Event(type=Event.EventType.PLAY)
@@ -195,6 +196,7 @@ def main():
                     message = 'get'
                     comm.send(Event(type=Event.EventType.DECLINE, message=str(invitation)))
                     invitation = None
+                    player = None
 
                 if game:
                     for btn in btns:
