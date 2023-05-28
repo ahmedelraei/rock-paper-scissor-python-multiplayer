@@ -69,25 +69,25 @@ class TestHandleClient(unittest.TestCase):
         for i in range(6):
             self.server.add_to_waiting(self.client.conn(), i)
         self.server.invite(5, 4)
-        self.assertIsInstance(self.server.decline_invitation(5), Event)
+        self.assertIsInstance(self.server.decline_invitation(5, 4), Event)
 
     def test_decline_non_existing_game(self):
         for i in range(6):
             self.server.add_to_waiting(self.client.conn(), i)
         self.server.invite(5, 4)
-        self.assertRaises(KeyError, lambda: self.server.decline_invitation(6))
+        self.assertRaises(KeyError, lambda: self.server.decline_invitation(6, 4))
 
     def test_decline_non_existing_player(self):
         for i in range(6):
             self.server.add_to_waiting(self.client.conn(), i)
         self.server.invite(5, 4)
-        self.assertRaises(KeyError, lambda: self.server.decline_invitation(7))
+        self.assertRaises(KeyError, lambda: self.server.decline_invitation(5, 8))
 
     def test_decline_non_existing_game_and_player(self):
         for i in range(6):
             self.server.add_to_waiting(self.client.conn(), i)
         self.server.invite(5, 4)
-        self.assertRaises(KeyError, lambda: self.server.decline_invitation(6))
+        self.assertRaises(KeyError, lambda: self.server.decline_invitation(6, 8))
 
     def tearDown(self):
         self.server.close()

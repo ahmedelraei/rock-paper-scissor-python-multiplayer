@@ -165,10 +165,9 @@ def main():
                     text = font.render("You Lost...", 1, (255, 0, 0))
 
                 win.blit(text, (width / 2 - text.get_width() / 2, height / 2 - text.get_height() / 2))
+                run = False
                 pygame.display.update()
                 pygame.time.delay(2000)
-                game = None
-                message = 'get'
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

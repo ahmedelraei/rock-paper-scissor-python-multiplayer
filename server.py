@@ -71,7 +71,6 @@ class Server:
         """
         if player_chosen in self.waiting:
             self.games[player_id] = Game(player_id)
-            print(self.games)
             event = self.__process_event(Event.EventType.INVITE, str(player_id))
             return event
         return None
@@ -92,14 +91,17 @@ class Server:
             return None
         return self.games[game_id]
 
-    def decline_invitation(self, game_id: int) -> Event:
+    def decline_invitation(self, game_id: int, player_id: int) -> Event:
         """
         Decline invitation to game
         :param game_id: id of game to decline
+        :param player_id: id of player declining invitation
         :return: decline event
         """
         try:
             del self.games[game_id]
+            self.waiting[game_id] = self.connected[game_id]
+            self.waiting[player_id] = self.connected[player_id]
         except KeyError:
             raise KeyError("Game not found")
         return self.__process_event(Event.EventType.DECLINE, str(game_id))
@@ -162,7 +164,7 @@ class Server:
                         await loop.sock_sendall(self.connected[game_id], pickle.dumps(game))
                     elif event.type == Event.EventType.DECLINE:
                         game_id = int(event.message)
-                        response = self.decline_invitation(game_id)
+                        response = self.decline_invitation(game_id, player_id)
                         await loop.sock_sendall(client, pickle.dumps(response))
                         await loop.sock_sendall(self.connected[game_id],
                                                 pickle.dumps(response))
@@ -176,9 +178,8 @@ class Server:
                                     await loop.sock_sendall(client, pickle.dumps(game))
                                     await loop.sock_sendall(self.connected[game_id], pickle.dumps(game))
                                     if game.both_moved():
-                                        print(self.connected)
                                         self.waiting[game_id] = self.connected[game_id]
-                                        del self.connected[game_id]
+                                        del self.playing[game_id]
                                         self.waiting[player_id] = client
                             await loop.sock_sendall(client, pickle.dumps(self.games[game_id]))
                     await loop.sock_sendall(client,
